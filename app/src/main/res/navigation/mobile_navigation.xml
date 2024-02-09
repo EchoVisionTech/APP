@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_ullada"
+        android:name="com.dam.echovisiontech.ui.ullada.HomeFragment"
+        android:label="@string/title_ullada"
+        tools:layout="@layout/fragment_ullada" />
+
+    <fragment
+        android:id="@+id/navigation_historial"
+        android:name="com.dam.echovisiontech.ui.historial.DashboardFragment"
+        android:label="@string/title_historial"
+        tools:layout="@layout/fragment_historial" />
+
+    <fragment
+        android:id="@+id/navigation_compte"
+        android:name="com.dam.echovisiontech.ui.compte.NotificationsFragment"
+        android:label="@string/title_compte"
+        tools:layout="@layout/fragment_compte" />
+</navigation>
