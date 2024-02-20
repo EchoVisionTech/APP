@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.speech.tts.TextToSpeech;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,6 +60,7 @@ import java.util.concurrent.Executors;
 
 public class UlladaFragment extends Fragment {
 
+    private int cont_toast = 0;
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
@@ -68,6 +70,7 @@ public class UlladaFragment extends Fragment {
     private Sensor accelerometer;
     private SensorEventListener sensorListener;
     private long lastTapTime = 0;
+    private TextToSpeech tts;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_ullada, container, false);
@@ -77,6 +80,7 @@ public class UlladaFragment extends Fragment {
         Button captureImage = root.findViewById(R.id.captureImage);
         captureImage.setOnClickListener(v -> captureImage());
 
+        // Detectar Doble Tap
         sensorListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent sensorEvent) {
@@ -90,6 +94,17 @@ public class UlladaFragment extends Fragment {
                 // Ignore for now
             }
         };
+
+        // Text to speech
+        Locale locSpanish = new Locale("spa", "ESP");
+        tts =new TextToSpeech(requireContext().getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    tts.setLanguage(locSpanish);
+                }
+            }
+        });
 
         return root;
     }
@@ -175,7 +190,10 @@ public class UlladaFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(requireContext(), imagePath, Toast.LENGTH_LONG).show();
+                if (cont_toast == 0) {
+                    Toast.makeText(requireContext(), imagePath, Toast.LENGTH_LONG).show();
+                    cont_toast = 1;
+                }
             }
         });
     }
@@ -210,7 +228,7 @@ public class UlladaFragment extends Fragment {
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String response = reader.readLine();
-
+            tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
             Log.d("Respuesta", response);
 
             connection.disconnect();
@@ -248,6 +266,7 @@ public class UlladaFragment extends Fragment {
 
         if (tapInterval < 1000 && zAcc < -9.0) { // Check if tap interval is less than 1 second and zAcc indicates a tap
             //showToast("Double Tap Detected!");
+            cont_toast = 0;
             captureImage();
             lastTapTime = 0; // Reset last tap time after detecting double tap
         } else if (zAcc < -9.0) { // If a tap is detected, update the last tap time
