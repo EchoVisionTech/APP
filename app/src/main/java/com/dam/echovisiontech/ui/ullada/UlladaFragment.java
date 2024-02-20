@@ -73,6 +73,7 @@ public class UlladaFragment extends Fragment {
     private SensorEventListener sensorListener;
     private long lastTapTime = 0;
     private TextToSpeech tts;
+    private boolean lady_talking = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_ullada, container, false);
@@ -161,23 +162,25 @@ public class UlladaFragment extends Fragment {
     }
 
     private void captureImage() {
-        SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
-        File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
+        //if (!lady_talking){
+            SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
+            File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
 
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
-        imageCapture.takePicture(outputFileOptions, executor, new ImageCapture.OnImageSavedCallback() {
-            @Override
-            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                String imagePath = outputFileResults.getSavedUri().toString(); // Get the image path
-                showImagePath(imagePath);
-                sendImageToServerAsync(imageFile); // Llama a la función que envía la imagen al servidor en otro hilo
-            }
+            ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
+            imageCapture.takePicture(outputFileOptions, executor, new ImageCapture.OnImageSavedCallback() {
+                @Override
+                public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                    String imagePath = outputFileResults.getSavedUri().toString(); // Get the image path
+                    showImagePath(imagePath);
+                    sendImageToServerAsync(imageFile); // Llama a la función que envía la imagen al servidor en otro hilo
+                }
 
-            @Override
-            public void onError(@NonNull ImageCaptureException error) {
-                error.printStackTrace();
-            }
-        });
+                @Override
+                public void onError(@NonNull ImageCaptureException error) {
+                    error.printStackTrace();
+                }
+            });
+       // }
     }
 
     private void sendImageToServerAsync(File imageFile) {
@@ -193,7 +196,7 @@ public class UlladaFragment extends Fragment {
             @Override
             public void run() {
                 if (cont_toast == 0) {
-                    Toast.makeText(requireContext(), imagePath, Toast.LENGTH_LONG).show();
+                    Toast.makeText(requireContext(), "Imagen enviada", Toast.LENGTH_LONG).show();
                     cont_toast = 1;
                 }
             }
@@ -230,7 +233,7 @@ public class UlladaFragment extends Fragment {
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String response = reader.readLine();
-            tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
+            tts.speak(response, TextToSpeech.QUEUE_ADD, null);
             Log.d("Respuesta", response);
 
             connection.disconnect();
