@@ -3,7 +3,12 @@ package com.dam.echovisiontech.ui.ullada;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,6 +64,10 @@ public class UlladaFragment extends Fragment {
     private ImageCapture imageCapture;
     private Executor executor = Executors.newSingleThreadExecutor(); // You need to initialize an executor
     private static final int REQUEST_CAMERA_PERMISSION = 200;
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private SensorEventListener sensorListener;
+    private long lastTapTime = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_ullada, container, false);
@@ -68,6 +77,20 @@ public class UlladaFragment extends Fragment {
         Button captureImage = root.findViewById(R.id.captureImage);
         captureImage.setOnClickListener(v -> captureImage());
 
+        sensorListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent sensorEvent) {
+                float zAcc = sensorEvent.values[2];
+                // Check for a double tap based on z-axis movement
+                detectDoubleTap(zAcc);
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int i) {
+                // Ignore for now
+            }
+        };
+
         return root;
     }
 
@@ -76,6 +99,14 @@ public class UlladaFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
         requestCameraPermission(); // Request camera permission here
+
+
+        sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        if (accelerometer != null) {
+            sensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        }
     }
 
     private void requestCameraPermission() {
@@ -209,5 +240,18 @@ public class UlladaFragment extends Fragment {
         }
         byte[] imageBytes = outputStream.toByteArray();
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+    }
+
+    private void detectDoubleTap(float zAcc) {
+        long now = SystemClock.uptimeMillis();
+        long tapInterval = now - lastTapTime;
+
+        if (tapInterval < 1000 && zAcc < -9.0) { // Check if tap interval is less than 1 second and zAcc indicates a tap
+            //showToast("Double Tap Detected!");
+            captureImage();
+            lastTapTime = 0; // Reset last tap time after detecting double tap
+        } else if (zAcc < -9.0) { // If a tap is detected, update the last tap time
+            lastTapTime = now;
+        }
     }
 }
