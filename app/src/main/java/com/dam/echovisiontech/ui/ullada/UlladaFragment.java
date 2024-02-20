@@ -58,6 +58,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class UlladaFragment extends Fragment {
 
     private int cont_toast = 0;
@@ -200,7 +202,7 @@ public class UlladaFragment extends Fragment {
 
     private void sendImageToServer(File imageFile) {
         String imageData = convertImageToBase64(imageFile);
-        String serverUrl = "http://192.168.18.198:3000/data";
+        String serverUrl = "https://ams22.ieti.site:443/data";
 
         Log.d("IMAGEN", imageData);
 
@@ -213,7 +215,7 @@ public class UlladaFragment extends Fragment {
 
             // send JSON
             URL url = new URL(serverUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setDoOutput(true);
