@@ -10,6 +10,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -100,11 +101,30 @@ public class UlladaFragment extends Fragment {
 
         // Text to speech
         Locale locSpanish = new Locale("spa", "ESP");
-        tts =new TextToSpeech(requireContext().getApplicationContext(), new TextToSpeech.OnInitListener() {
+        tts = new TextToSpeech(requireContext().getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
                 if(status != TextToSpeech.ERROR) {
                     tts.setLanguage(locSpanish);
+                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String utteranceId) {
+                            // Called when the utterance starts being spoken
+                            lady_talking = true;
+                        }
+
+                        @Override
+                        public void onDone(String utteranceId) {
+                            // Called when the utterance is done being spoken
+                            lady_talking = false;
+                        }
+
+                        @Override
+                        public void onError(String utteranceId) {
+                            // Called when there was an error speaking the utterance
+                            lady_talking = false;
+                        }
+                    });
                 }
             }
         });
@@ -162,7 +182,7 @@ public class UlladaFragment extends Fragment {
     }
 
     private void captureImage() {
-        //if (!lady_talking){
+        if (!lady_talking){
             SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
             File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
 
@@ -180,7 +200,7 @@ public class UlladaFragment extends Fragment {
                     error.printStackTrace();
                 }
             });
-       // }
+        }
     }
 
     private void sendImageToServerAsync(File imageFile) {
