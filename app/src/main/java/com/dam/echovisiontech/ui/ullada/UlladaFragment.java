@@ -9,6 +9,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -57,9 +59,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class UlladaFragment extends Fragment {
 
-    private Context context;
+    private int cont_toast = 0;
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
@@ -69,6 +73,8 @@ public class UlladaFragment extends Fragment {
     private Sensor accelerometer;
     private SensorEventListener sensorListener;
     private long lastTapTime = 0;
+    private TextToSpeech tts;
+    private boolean lady_talking = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_ullada, container, false);
@@ -78,20 +84,11 @@ public class UlladaFragment extends Fragment {
         Button captureImage = root.findViewById(R.id.captureImage);
         captureImage.setOnClickListener(v -> captureImage());
 
-        return root;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
-        requestCameraPermission(); // Request camera permission here
-
+        // Detectar Doble Tap
         sensorListener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent sensorEvent) {
                 float zAcc = sensorEvent.values[2];
-
                 // Check for a double tap based on z-axis movement
                 detectDoubleTap(zAcc);
             }
@@ -102,23 +99,51 @@ public class UlladaFragment extends Fragment {
             }
         };
 
-        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        // Text to speech
+        Locale locSpanish = new Locale("spa", "ESP");
+        tts = new TextToSpeech(requireContext().getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    tts.setLanguage(locSpanish);
+                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(String utteranceId) {
+                            // Called when the utterance starts being spoken
+                            lady_talking = true;
+                        }
+
+                        @Override
+                        public void onDone(String utteranceId) {
+                            // Called when the utterance is done being spoken
+                            lady_talking = false;
+                        }
+
+                        @Override
+                        public void onError(String utteranceId) {
+                            // Called when there was an error speaking the utterance
+                            lady_talking = false;
+                        }
+                    });
+                }
+            }
+        });
+
+        return root;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        cameraProviderFuture = ProcessCameraProvider.getInstance(requireContext());
+        requestCameraPermission(); // Request camera permission here
+
+
+        sensorManager = (SensorManager) requireContext().getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         if (accelerometer != null) {
             sensorManager.registerListener(sensorListener, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        }
-    }
-
-    private void detectDoubleTap(float zAcc) {
-        long now = SystemClock.uptimeMillis();
-        long tapInterval = now - lastTapTime;
-
-        if (tapInterval < 1000 && zAcc < -9.0) { // Check if tap interval is less than 1 second and zAcc indicates a tap
-            captureImage(); // Capture an image if a double tap is detected
-            lastTapTime = 0; // Reset last tap time after detecting double tap
-        } else if (zAcc < -9.0) { // If a tap is detected, update the last tap time
-            lastTapTime = now;
         }
     }
 
@@ -157,23 +182,25 @@ public class UlladaFragment extends Fragment {
     }
 
     private void captureImage() {
-        SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
-        File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
+        if (!lady_talking){
+            SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
+            File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
 
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
-        imageCapture.takePicture(outputFileOptions, executor, new ImageCapture.OnImageSavedCallback() {
-            @Override
-            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                String imagePath = outputFileResults.getSavedUri().toString(); // Get the image path
-                showImagePath(imagePath);
-                sendImageToServerAsync(imageFile); // Llama a la función que envía la imagen al servidor en otro hilo
-            }
+            ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile).build();
+            imageCapture.takePicture(outputFileOptions, executor, new ImageCapture.OnImageSavedCallback() {
+                @Override
+                public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                    String imagePath = outputFileResults.getSavedUri().toString(); // Get the image path
+                    showImagePath(imagePath);
+                    sendImageToServerAsync(imageFile); // Llama a la función que envía la imagen al servidor en otro hilo
+                }
 
-            @Override
-            public void onError(@NonNull ImageCaptureException error) {
-                error.printStackTrace();
-            }
-        });
+                @Override
+                public void onError(@NonNull ImageCaptureException error) {
+                    error.printStackTrace();
+                }
+            });
+        }
     }
 
     private void sendImageToServerAsync(File imageFile) {
@@ -188,14 +215,16 @@ public class UlladaFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(requireContext(), imagePath, Toast.LENGTH_LONG).show();
+                if (cont_toast == 0) {
+                    Toast.makeText(requireContext(), "Imagen enviada", Toast.LENGTH_LONG).show();
+                    cont_toast = 1;
+                }
             }
         });
     }
-
     private void sendImageToServer(File imageFile) {
         String imageData = convertImageToBase64(imageFile);
-        String serverUrl = "http://192.168.18.198:3000/data";
+        String serverUrl = "https://ams22.ieti.site:443/api/maria/image";
 
         Log.d("IMAGEN", imageData);
 
@@ -208,7 +237,7 @@ public class UlladaFragment extends Fragment {
 
             // send JSON
             URL url = new URL(serverUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setDoOutput(true);
@@ -223,7 +252,7 @@ public class UlladaFragment extends Fragment {
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String response = reader.readLine();
-
+            tts.speak(response, TextToSpeech.QUEUE_ADD, null);
             Log.d("Respuesta", response);
 
             connection.disconnect();
@@ -253,5 +282,19 @@ public class UlladaFragment extends Fragment {
         }
         byte[] imageBytes = outputStream.toByteArray();
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
+    }
+
+    private void detectDoubleTap(float zAcc) {
+        long now = SystemClock.uptimeMillis();
+        long tapInterval = now - lastTapTime;
+
+        if (tapInterval < 1000 && zAcc < -9.0) { // Check if tap interval is less than 1 second and zAcc indicates a tap
+            //showToast("Double Tap Detected!");
+            cont_toast = 0;
+            captureImage();
+            lastTapTime = 0; // Reset last tap time after detecting double tap
+        } else if (zAcc < -9.0) { // If a tap is detected, update the last tap time
+            lastTapTime = now;
+        }
     }
 }
