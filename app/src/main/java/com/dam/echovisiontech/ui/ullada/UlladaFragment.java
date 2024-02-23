@@ -222,10 +222,9 @@ public class UlladaFragment extends Fragment {
             }
         });
     }
-
     private void sendImageToServer(File imageFile) {
         String imageData = convertImageToBase64(imageFile);
-        String serverUrl = "https://ams22.ieti.site:443/data";
+        String serverUrl = "https://ams22.ieti.site:443/api/maria/image";
 
         Log.d("IMAGEN", imageData);
 
