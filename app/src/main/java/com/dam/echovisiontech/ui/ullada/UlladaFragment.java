@@ -252,7 +252,8 @@ public class UlladaFragment extends Fragment {
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String response = reader.readLine();
-            tts.speak(response, TextToSpeech.QUEUE_ADD, null);
+            //tts.speak(response, TextToSpeech.QUEUE_ADD, null);
+            tts.speak(response, TextToSpeech.QUEUE_ADD, null, "1");
             Log.d("Respuesta", response);
 
             connection.disconnect();

@@ -3,7 +3,16 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-.gradle
+.gradle/
+.gradle/8.2
+.gradle/buildOutputCleanuo
+.gradle/vcs-1
+gradle.properties
+gradlew
+gradlew.bat
+local.properties
+settings.gradle
+
 
 ### IntelliJ IDEA ###
 .idea/
