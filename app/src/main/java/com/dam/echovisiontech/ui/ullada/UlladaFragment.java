@@ -110,19 +110,19 @@ public class UlladaFragment extends Fragment {
                         @Override
                         public void onStart(String utteranceId) {
                             // Called when the utterance starts being spoken
-                            lady_talking = true;
+                            Log.d("TTS", "Talking = True");
                         }
 
                         @Override
                         public void onDone(String utteranceId) {
                             // Called when the utterance is done being spoken
-                            lady_talking = false;
+                            Log.d("TTS", "Talking = False");
                         }
 
                         @Override
                         public void onError(String utteranceId) {
                             // Called when there was an error speaking the utterance
-                            lady_talking = false;
+                            Log.d("TTS", "Talking = Error");
                         }
                     });
                 }
@@ -182,7 +182,7 @@ public class UlladaFragment extends Fragment {
     }
 
     private void captureImage() {
-        if (!lady_talking){
+        //if (tts.isSpeaking()){
             SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
             File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
 
@@ -200,7 +200,7 @@ public class UlladaFragment extends Fragment {
                     error.printStackTrace();
                 }
             });
-        }
+        //}
     }
 
     private void sendImageToServerAsync(File imageFile) {
@@ -252,8 +252,8 @@ public class UlladaFragment extends Fragment {
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             String response = reader.readLine();
-            //tts.speak(response, TextToSpeech.QUEUE_ADD, null);
-            tts.speak(response, TextToSpeech.QUEUE_ADD, null, "1");
+            //tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
+            tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, "1");
             Log.d("Respuesta", response);
 
             connection.disconnect();
