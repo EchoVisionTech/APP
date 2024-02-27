@@ -5,6 +5,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -20,7 +22,7 @@ import java.io.File;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
-    DialogRegister dialog = new DialogRegister();
+    DialogRegister dialog = new DialogRegister(this);
     boolean tokenValidated = false;
 
     @Override
@@ -49,14 +51,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             navController.navigate(R.id.navigation_compte);
             dialog.showAlertDialog(this, "Register", "Please register to use the app");
+            Log.d("DIALOG", "Dialog shown");
         }
     }
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
-    public void setTokenValidated(boolean tokenValidated) {
-        this.tokenValidated = tokenValidated;
+    public void setTokenValidated(boolean value) {
+        this.tokenValidated = value;
     }
 }

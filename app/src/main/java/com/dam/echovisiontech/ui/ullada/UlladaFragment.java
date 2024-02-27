@@ -75,7 +75,6 @@ public class UlladaFragment extends Fragment {
     private SensorEventListener sensorListener;
     private long lastTapTime = 0;
     private TextToSpeech tts;
-    private boolean lady_talking = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_ullada, container, false);
@@ -256,7 +255,7 @@ public class UlladaFragment extends Fragment {
 
             // Escribir el objeto JSON en el cuerpo de la solicitud
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(String.valueOf(new JSONObject().put("data",json.toString())));
+            outputStreamWriter.write(String.valueOf(json.toString()));
             outputStreamWriter.flush();
             outputStreamWriter.close();
 

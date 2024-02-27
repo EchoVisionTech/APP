@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.dam.echovisiontech.ui.ullada.UlladaFragment;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,12 +27,17 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 public class DialogRegister {
-    static MainActivity mainActivity = new MainActivity();
+    private static MainActivity mainActivity;
+
+    public DialogRegister(MainActivity mainActivity) {
+        this.mainActivity = mainActivity;
+    }
     static EditText fieldName;
     static EditText fieldPhone;
     static EditText fieldEmail;
     static EditText fieldCode;
     static String userPhone;
+
     public static void showAlertDialog(Context context, String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setCancelable(false);
@@ -76,10 +83,6 @@ public class DialogRegister {
         });*/
         builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
-                Log.d("fieldsFalse1",fieldName.getText().toString());
-                Log.d("fieldsFalse1",fieldPhone.getText().toString());
-                Log.d("fieldsFalse1",fieldEmail.getText().toString());
-
                 // Do something when the "OK" button is clicked
                 if (!getUserFields(context)) {
                     // Show a message to the user indicating that fields are empty
@@ -92,7 +95,7 @@ public class DialogRegister {
                     String phone = fieldPhone.getText().toString();
                     userPhone = phone;
                     String email = fieldEmail.getText().toString();
-                    //sendUserToServerAsync(name, phone, email);
+                    sendUserToServerAsync(name, phone, email);
                     showSMSvalidationDialog(context);
                 }
             }
@@ -127,7 +130,7 @@ public class DialogRegister {
                     showSMSvalidationDialog(context);
                 } else {
                     dialog.dismiss();
-                    sendCodeVerification(context, fieldCode.getText().toString(), userPhone);
+                    sendCodeVerificationAsync(context, fieldCode.getText().toString(), userPhone);
                 }
             }
         });
@@ -159,7 +162,7 @@ public class DialogRegister {
 
             // Escribir el objeto JSON en el cuerpo de la solicitud
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(String.valueOf(new JSONObject().put("data",json.toString())));
+            outputStreamWriter.write(json.toString());
             outputStreamWriter.flush();
             outputStreamWriter.close();
 
@@ -182,6 +185,13 @@ public class DialogRegister {
             sendUserToServer(name, phoneNumber, email);
         });
     }
+    private static void sendCodeVerificationAsync(Context context, String verificationCode, String phoneNumber) {
+        // Usa un Executor para ejecutar la tarea en otro hilo
+        Executor sendExecutor = Executors.newSingleThreadExecutor();
+        sendExecutor.execute(() -> {
+            sendCodeVerification(context, verificationCode, phoneNumber);
+        });
+    }
 
     private static void sendCodeVerification(Context context, String verificationCode, String phoneNumber) {
 
@@ -202,29 +212,41 @@ public class DialogRegister {
 
             // Escribir el objeto JSON en el cuerpo de la solicitud
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(connection.getOutputStream());
-            outputStreamWriter.write(String.valueOf(new JSONObject().put("data",json.toString())));
+            outputStreamWriter.write(json.toString());
             outputStreamWriter.flush();
             outputStreamWriter.close();
 
             // Leer la respuesta del servidor
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            // Receive json response
-            String response = reader.readLine();
-            Log.d("Respuesta", response);
+            // Read all the lines of the response
+            String dataResponse = reader.readLine();
+            String response = dataResponse;
+            while (dataResponse != null) {
+
+                dataResponse = reader.readLine();
+                response += dataResponse;
+                Log.d("RESPUESTA", response);
+            }
             // Parse json response
             JSONObject jsonResponse = new JSONObject(response);
             String status = jsonResponse.getString("status");
+            Log.d("STATUS", status);
+
             if (status.equals("OK")) {
-                String token = jsonResponse.getString("api_key");
-                Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
+                JSONObject data = new JSONObject(jsonResponse.getString("data"));
+                String token = data.getString("api_key");
+                Log.d("REGISTRO", "User registered");
+                Log.d("APIKEY", token);
+                //Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
                 // Write token in private app folder
                 OutputStreamWriter outputStreamWriterToken = new OutputStreamWriter(context.openFileOutput("token.txt", Context.MODE_PRIVATE));
                 outputStreamWriterToken.write(token);
                 outputStreamWriterToken.close();
                 mainActivity.setTokenValidated(true);
             } else {
-                Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
+                Log.d("ERROR", "Error registering user");
             }
             connection.disconnect();
 
