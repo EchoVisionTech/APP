@@ -25,6 +25,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 public class DialogRegister {
+    static MainActivity mainActivity = new MainActivity();
     static EditText fieldName;
     static EditText fieldPhone;
     static EditText fieldEmail;
@@ -67,12 +68,12 @@ public class DialogRegister {
         fieldPhone = view.findViewById(R.id.fieldPhone);
         fieldEmail = view.findViewById(R.id.fieldEmail);
 
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+/*        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int i) {
                 dialog.dismiss();
             }
-        });
+        });*/
         builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 Log.d("fieldsFalse1",fieldName.getText().toString());
@@ -92,10 +93,13 @@ public class DialogRegister {
                     userPhone = phone;
                     String email = fieldEmail.getText().toString();
                     //sendUserToServerAsync(name, phone, email);
+                    showSMSvalidationDialog(context);
                 }
             }
         });
         AlertDialog registerDialog = builder.create();
+        registerDialog.setCanceledOnTouchOutside(false);
+
         registerDialog.show();
     }
 
@@ -123,12 +127,14 @@ public class DialogRegister {
                     showSMSvalidationDialog(context);
                 } else {
                     dialog.dismiss();
-                    sendCodeVerification(fieldCode.getText().toString(), userPhone);
+                    sendCodeVerification(context, fieldCode.getText().toString(), userPhone);
                 }
             }
         });
-        AlertDialog registerDialog = builder.create();
-        registerDialog.show();
+        AlertDialog smsDialog = builder.create();
+        // Set the property to prevent dialog from dismissing when touched outside
+        smsDialog.setCanceledOnTouchOutside(false);
+        smsDialog.show();
     }
 
     private static void sendUserToServer(String name, String phoneNumber, String email) {
@@ -177,7 +183,7 @@ public class DialogRegister {
         });
     }
 
-    private static void sendCodeVerification(String verificationCode, String phoneNumber) {
+    private static void sendCodeVerification(Context context, String verificationCode, String phoneNumber) {
 
         String serverUrl = "https://ams22.ieti.site:443/api/usuaris/validar";
 
@@ -203,9 +209,23 @@ public class DialogRegister {
             // Leer la respuesta del servidor
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            // Receive json response
             String response = reader.readLine();
             Log.d("Respuesta", response);
-
+            // Parse json response
+            JSONObject jsonResponse = new JSONObject(response);
+            String status = jsonResponse.getString("status");
+            if (status.equals("OK")) {
+                String token = jsonResponse.getString("api_key");
+                Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
+                // Write token in private app folder
+                OutputStreamWriter outputStreamWriterToken = new OutputStreamWriter(context.openFileOutput("token.txt", Context.MODE_PRIVATE));
+                outputStreamWriterToken.write(token);
+                outputStreamWriterToken.close();
+                mainActivity.setTokenValidated(true);
+            } else {
+                Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
+            }
             connection.disconnect();
 
         } catch (IOException | JSONException e) {

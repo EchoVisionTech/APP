@@ -15,13 +15,13 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.dam.echovisiontech.databinding.ActivityMainBinding;
 
+import java.io.File;
+
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
     DialogRegister dialog = new DialogRegister();
-    boolean phoneValidated = false;
     boolean tokenValidated = false;
-    boolean showDialog = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +30,11 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Check if token exists in private app folder
+        File tokenFile = new File(getFilesDir(), "token.txt");
+        if (tokenFile.exists()) {
+            tokenValidated = true;
+        }
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -39,18 +44,19 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-        if (phoneValidated && tokenValidated) {
+        if (tokenValidated) {
             navController.navigate(R.id.navigation_ullada);
         } else {
             navController.navigate(R.id.navigation_compte);
-            showDialog = true;
-            //DialogRegister.showNameDialog(this);
-            DialogRegister.showAlertDialog(this, "EchoVisionTech", "Valida el teu telèfon per poder accedir a la resta de funcionalitats");
+            dialog.showAlertDialog(this, "Register", "Please register to use the app");
         }
-
     }
     @Override
     protected void onStart() {
         super.onStart();
+    }
+
+    public void setTokenValidated(boolean tokenValidated) {
+        this.tokenValidated = tokenValidated;
     }
 }
