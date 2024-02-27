@@ -52,6 +52,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -225,13 +226,24 @@ public class UlladaFragment extends Fragment {
     private void sendImageToServer(File imageFile) {
         String imageData = convertImageToBase64(imageFile);
         String serverUrl = "https://ams22.ieti.site:443/api/maria/image";
+        // Read token from file
+        String token = "";
+        File tokenFile = new File(requireContext().getFilesDir(), "token.txt");
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(tokenFile.toPath())));
+            token = reader.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
+        Log.d("TOKEN", token);
         Log.d("IMAGEN", imageData);
 
         // create JSON
         JSONObject json = new JSONObject();
         try {
-            json.put("type", "image");
+            json.put("prompt", "Describe esta imagen");
+            json.put("token", token);
             json.put("image", imageData);
 
 
