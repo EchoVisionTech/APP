@@ -22,7 +22,7 @@ import java.io.File;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
-    DialogRegister dialog = new DialogRegister(this);
+    //DialogRegister dialog = new DialogRegister(this);
     boolean tokenValidated = false;
     NavController navController;
 
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
         if (!tokenValidated) {
-            dialog.showAlertDialog(this, "Register", "Please register to use the app");
+            DialogRegister.showAlertDialog(this, "Register", "Please register to use the app");
         }
     }
 

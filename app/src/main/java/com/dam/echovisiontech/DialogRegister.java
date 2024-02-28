@@ -27,17 +27,18 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 public class DialogRegister {
-    private static MainActivity mainActivity;
-
-    public DialogRegister(MainActivity mainActivity) {
-        this.mainActivity = mainActivity;
-    }
+//    private static MainActivity mainActivity;
+//
+//    public DialogRegister(MainActivity mainActivity) {
+//        this.mainActivity = mainActivity;
+//    }
     static EditText fieldName;
     static EditText fieldPhone;
     static EditText fieldEmail;
     static EditText fieldCode;
     static String userPhone;
 
+    // Method to create and show the alert dialog showing the user is not registered
     public static void showAlertDialog(Context context, String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setCancelable(false);
@@ -65,6 +66,8 @@ public class DialogRegister {
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
     }
+
+    // Method to create and show the register dialog
     public static void showRegisterDialog(Context context){
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setCancelable(false);
@@ -101,11 +104,14 @@ public class DialogRegister {
             }
         });
         AlertDialog registerDialog = builder.create();
+
+        // Set the property to prevent dialog from dismissing when touched outside
         registerDialog.setCanceledOnTouchOutside(false);
 
         registerDialog.show();
     }
 
+    // Method to create and show the SMS validation dialog
     public static void showSMSvalidationDialog(Context context) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setCancelable(false);
@@ -140,6 +146,7 @@ public class DialogRegister {
         smsDialog.show();
     }
 
+    // Method to connect and send user data to the server
     private static void sendUserToServer(String name, String phoneNumber, String email) {
 
         String serverUrl = "https://ams22.ieti.site:443/api/user/register";
@@ -175,21 +182,17 @@ public class DialogRegister {
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
+            Log.d("ERROR", "Error registering user\n" + e);
         }
     }
+
+    // Send user data to the server in a new thread
     private static void sendUserToServerAsync(String name, String phoneNumber, String email) {
         // Usa un Executor para ejecutar la tarea en otro hilo
         Executor sendExecutor = Executors.newSingleThreadExecutor();
         sendExecutor.execute(() -> {
             sendUserToServer(name, phoneNumber, email);
-        });
-    }
-    private static void sendCodeVerificationAsync(Context context, String verificationCode, String phoneNumber) {
-        // Usa un Executor para ejecutar la tarea en otro hilo
-        Executor sendExecutor = Executors.newSingleThreadExecutor();
-        sendExecutor.execute(() -> {
-            sendCodeVerification(context, verificationCode, phoneNumber);
         });
     }
 
@@ -239,6 +242,7 @@ public class DialogRegister {
                 Log.d("REGISTRO", "User registered");
                 Log.d("APIKEY", token);
                 //Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
+
                 // Write token in private app folder
                 OutputStreamWriter outputStreamWriterToken = new OutputStreamWriter(context.openFileOutput("token.txt", Context.MODE_PRIVATE));
                 outputStreamWriterToken.write(token);
@@ -246,14 +250,26 @@ public class DialogRegister {
                 //mainActivity.setTokenValidated(true);
             } else {
                 //Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
-                Log.d("ERROR", "Error registering user");
+                Log.d("ERROR", "Error sending verification code");
             }
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
+            Log.d("ERROR", "Error registering user\n" + e);
         }
     }
+
+    // Send the verification code to the server in a new thread
+    private static void sendCodeVerificationAsync(Context context, String verificationCode, String phoneNumber) {
+        // Usa un Executor para ejecutar la tarea en otro hilo
+        Executor sendExecutor = Executors.newSingleThreadExecutor();
+        sendExecutor.execute(() -> {
+            sendCodeVerification(context, verificationCode, phoneNumber);
+        });
+    }
+
+    // Get the user fields and check if they are empty. Logs for debugging
     private static boolean getUserFields(Context context) {
         if (fieldName.getText().toString().isEmpty() || fieldPhone.getText().toString().isEmpty() || fieldEmail.getText().toString().isEmpty()) {
             Log.d("fieldsFalse",fieldName.getText().toString());
@@ -268,7 +284,6 @@ public class DialogRegister {
             return true;
         }
     }
-
 }
 
 

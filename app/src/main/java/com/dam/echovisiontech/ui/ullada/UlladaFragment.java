@@ -106,25 +106,6 @@ public class UlladaFragment extends Fragment {
             public void onInit(int status) {
                 if(status != TextToSpeech.ERROR) {
                     tts.setLanguage(locSpanish);
-//                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-//                        @Override
-//                        public void onStart(String utteranceId) {
-//                            // Called when the utterance starts being spoken
-//                            Log.d("TTS", "Talking = True");
-//                        }
-//
-//                        @Override
-//                        public void onDone(String utteranceId) {
-//                            // Called when the utterance is done being spoken
-//                            Log.d("TTS", "Talking = False");
-//                        }
-//
-//                        @Override
-//                        public void onError(String utteranceId) {
-//                            // Called when there was an error speaking the utterance
-//                            Log.d("TTS", "Talking = Error");
-//                        }
-//                    });
                 }
             }
         });
@@ -232,7 +213,8 @@ public class UlladaFragment extends Fragment {
             BufferedReader reader = new BufferedReader(new InputStreamReader(Files.newInputStream(tokenFile.toPath())));
             token = reader.readLine();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
+            Log.d("ERROR", "Error al leer el token\n" + e);
         }
 
         Log.d("TOKEN", token);
@@ -271,7 +253,7 @@ public class UlladaFragment extends Fragment {
 
         } catch (IOException | JSONException e) {
             //throw new RuntimeException(e);
-            Log.d("ERROR", e.toString());
+            Log.d("ERROR", "Error al enviar la imagen al servidor\n" + e);
         }
     }
 
@@ -281,15 +263,17 @@ public class UlladaFragment extends Fragment {
         try {
             inputStream = new FileInputStream(imageFile);
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
+            Log.d("ERROR", "Error al convertir la imagen a base64\n" + e);
         }
         byte[] buffer = new byte[1024];
-        int bytesRead;
+        int bytesRead = 0;
         while (true) {
             try {
                 if ((bytesRead = inputStream.read(buffer)) == -1) break;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                //throw new RuntimeException(e);
+                Log.d("ERROR", "Error al convertir la imagen a base64\n" + e);
             }
             outputStream.write(buffer, 0, bytesRead);
         }
