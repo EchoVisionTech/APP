@@ -243,7 +243,7 @@ public class DialogRegister {
                 OutputStreamWriter outputStreamWriterToken = new OutputStreamWriter(context.openFileOutput("token.txt", Context.MODE_PRIVATE));
                 outputStreamWriterToken.write(token);
                 outputStreamWriterToken.close();
-                mainActivity.setTokenValidated(true);
+                //mainActivity.setTokenValidated(true);
             } else {
                 //Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
                 Log.d("ERROR", "Error registering user");
