@@ -32,9 +32,7 @@ import javax.net.ssl.HttpsURLConnection;
 
 public class CompteFragment extends Fragment {
 
-    EditText fieldName;
-    EditText fieldPhone;
-    EditText fieldEmail;
+    EditText welcomeText;
 
     private FragmentCompteBinding binding;
 
@@ -46,7 +44,6 @@ public class CompteFragment extends Fragment {
     binding = FragmentCompteBinding.inflate(inflater, container, false);
     View root = binding.getRoot();
 
-        //notificationsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

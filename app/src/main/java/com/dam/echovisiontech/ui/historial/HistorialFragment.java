@@ -16,14 +16,14 @@ private FragmentHistorialBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
             ViewGroup container, Bundle savedInstanceState) {
-        HistorialViewModel dashboardViewModel =
+        HistorialViewModel historialViewModel =
                 new ViewModelProvider(this).get(HistorialViewModel.class);
 
     binding = FragmentHistorialBinding.inflate(inflater, container, false);
     View root = binding.getRoot();
 
         final TextView textView = binding.textDashboard;
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        historialViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

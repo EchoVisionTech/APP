@@ -10,7 +10,7 @@ public class HistorialViewModel extends ViewModel {
 
     public HistorialViewModel() {
         mText = new MutableLiveData<>();
-        mText.setValue("This is dashboard fragment");
+        mText.setValue("Welcome to EchoVisionPro App!\n Still in development. :)");
     }
 
     public LiveData<String> getText() {

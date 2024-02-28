@@ -47,17 +47,12 @@ public class MainActivity extends AppCompatActivity {
         navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
-        if (tokenValidated) {
-            navController.navigate(R.id.navigation_ullada);
-        } else {
-            navController.navigate(R.id.navigation_compte);
+        if (!tokenValidated) {
             dialog.showAlertDialog(this, "Register", "Please register to use the app");
-            Log.d("DIALOG", "Dialog shown");
         }
     }
 
     public void setTokenValidated(boolean value) {
         this.tokenValidated = value;
-        navController.navigate(R.id.navigation_ullada);
     }
 }
