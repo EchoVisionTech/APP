@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     DialogRegister dialog = new DialogRegister(this);
     boolean tokenValidated = false;
+    NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_ullada, R.id.navigation_historial, R.id.navigation_compte)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
+        navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
         if (tokenValidated) {
@@ -57,5 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void setTokenValidated(boolean value) {
         this.tokenValidated = value;
+        navController.navigate(R.id.navigation_ullada);
     }
 }

@@ -106,25 +106,25 @@ public class UlladaFragment extends Fragment {
             public void onInit(int status) {
                 if(status != TextToSpeech.ERROR) {
                     tts.setLanguage(locSpanish);
-                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                        @Override
-                        public void onStart(String utteranceId) {
-                            // Called when the utterance starts being spoken
-                            Log.d("TTS", "Talking = True");
-                        }
-
-                        @Override
-                        public void onDone(String utteranceId) {
-                            // Called when the utterance is done being spoken
-                            Log.d("TTS", "Talking = False");
-                        }
-
-                        @Override
-                        public void onError(String utteranceId) {
-                            // Called when there was an error speaking the utterance
-                            Log.d("TTS", "Talking = Error");
-                        }
-                    });
+//                    tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+//                        @Override
+//                        public void onStart(String utteranceId) {
+//                            // Called when the utterance starts being spoken
+//                            Log.d("TTS", "Talking = True");
+//                        }
+//
+//                        @Override
+//                        public void onDone(String utteranceId) {
+//                            // Called when the utterance is done being spoken
+//                            Log.d("TTS", "Talking = False");
+//                        }
+//
+//                        @Override
+//                        public void onError(String utteranceId) {
+//                            // Called when there was an error speaking the utterance
+//                            Log.d("TTS", "Talking = Error");
+//                        }
+//                    });
                 }
             }
         });
@@ -241,7 +241,7 @@ public class UlladaFragment extends Fragment {
         // create JSON
         JSONObject json = new JSONObject();
         try {
-            json.put("prompt", "Describe esta imagen");
+            json.put("prompt", "Describe esta imagen en castellano");
             json.put("token", token);
             json.put("image", imageData);
 
@@ -270,7 +270,8 @@ public class UlladaFragment extends Fragment {
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
-            throw new RuntimeException(e);
+            //throw new RuntimeException(e);
+            Log.d("ERROR", e.toString());
         }
     }
 
