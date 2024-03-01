@@ -163,7 +163,7 @@ public class UlladaFragment extends Fragment {
     }
 
     private void captureImage() {
-        //if (tts.isSpeaking()){
+        if (tts.isSpeaking()){
             SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
             File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
 
@@ -181,7 +181,7 @@ public class UlladaFragment extends Fragment {
                     error.printStackTrace();
                 }
             });
-        //}
+        }
     }
 
     private void sendImageToServerAsync(File imageFile) {
@@ -244,6 +244,7 @@ public class UlladaFragment extends Fragment {
             // Leer la respuesta del servidor
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
             String response = reader.readLine();
             //tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
             tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, "1");
@@ -281,6 +282,9 @@ public class UlladaFragment extends Fragment {
         return Base64.encodeToString(imageBytes, Base64.NO_WRAP);
     }
 
+    public void checkImageQuota() {
+
+    }
     private void detectDoubleTap(float zAcc) {
         long now = SystemClock.uptimeMillis();
         long tapInterval = now - lastTapTime;

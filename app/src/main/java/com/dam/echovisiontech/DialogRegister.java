@@ -38,6 +38,22 @@ public class DialogRegister {
     static EditText fieldCode;
     static String userPhone;
 
+    // Method to create an error dialog
+    public static void showErrorDialog(Context context, String errorMessage, String errorSender) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Error");
+        builder.setMessage(errorMessage);
+        builder.setPositiveButton("OK", null);
+        AlertDialog errorDialog = builder.create();
+        errorDialog.show();
+
+        if (errorSender.equals("register")) {
+            showRegisterDialog(context);
+        } else if (errorSender.equals("sms")) {
+            showSMSvalidationDialog(context);
+        }
+    }
+
     // Method to create and show the alert dialog showing the user is not registered
     public static void showAlertDialog(Context context, String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -98,8 +114,9 @@ public class DialogRegister {
                     String phone = fieldPhone.getText().toString();
                     userPhone = phone;
                     String email = fieldEmail.getText().toString();
-                    sendUserToServerAsync(name, phone, email);
-                    showSMSvalidationDialog(context);
+                    sendUserToServerAsync(context, name, phone, email);
+
+                    //showSMSvalidationDialog(context);
                 }
             }
         });
@@ -147,7 +164,7 @@ public class DialogRegister {
     }
 
     // Method to connect and send user data to the server
-    private static void sendUserToServer(String name, String phoneNumber, String email) {
+    private static void sendUserToServer(Context context, String name, String phoneNumber, String email) {
 
         String serverUrl = "https://ams22.ieti.site:443/api/user/register";
 
@@ -179,6 +196,19 @@ public class DialogRegister {
             String response = reader.readLine();
             //Log.d("Respuesta", response);
 
+            // Register status control
+            if (response.equals("OK")) {
+                Log.d("REGISTER", "User registered");
+                // Show a toast message to the user to aknowledge the registration
+                //Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
+                // Go to next dialog
+                showSMSvalidationDialog(context);
+            } else {
+                //Toast.makeText(context, "Error al registrar al usuario", Toast.LENGTH_SHORT).show();
+                Log.e("REGISTER", "Error registering user");
+                showRegisterDialog(context);
+            }
+
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
@@ -188,11 +218,11 @@ public class DialogRegister {
     }
 
     // Send user data to the server in a new thread
-    private static void sendUserToServerAsync(String name, String phoneNumber, String email) {
+    private static void sendUserToServerAsync(Context context, String name, String phoneNumber, String email) {
         // Usa un Executor para ejecutar la tarea en otro hilo
         Executor sendExecutor = Executors.newSingleThreadExecutor();
         sendExecutor.execute(() -> {
-            sendUserToServer(name, phoneNumber, email);
+            sendUserToServer(context, name, phoneNumber, email);
         });
     }
 
@@ -226,7 +256,6 @@ public class DialogRegister {
             String dataResponse = reader.readLine();
             String response = dataResponse;
             while (dataResponse != null) {
-
                 dataResponse = reader.readLine();
                 response += dataResponse;
                 Log.d("RESPUESTA", response);
@@ -241,6 +270,8 @@ public class DialogRegister {
                 String token = data.getString("api_key");
                 Log.d("REGISTRO", "User registered");
                 Log.d("APIKEY", token);
+                // Show a toast message to the user to aknowledge the registration
+
                 //Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
 
                 // Write token in private app folder
@@ -249,8 +280,9 @@ public class DialogRegister {
                 outputStreamWriterToken.close();
                 //mainActivity.setTokenValidated(true);
             } else {
-                //Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
                 Log.d("ERROR", "Error sending verification code");
+                showSMSvalidationDialog(context);
             }
             connection.disconnect();
 
