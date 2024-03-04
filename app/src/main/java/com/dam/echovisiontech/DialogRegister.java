@@ -37,6 +37,9 @@ public class DialogRegister {
     static EditText fieldEmail;
     static EditText fieldCode;
     static String userPhone;
+    static boolean userRegistered = false;
+    static boolean smsValidated = false;
+
 
     // Method to create an error dialog
     public static void showErrorDialog(Context context, String errorMessage, String errorSender) {
@@ -94,12 +97,6 @@ public class DialogRegister {
         fieldPhone = view.findViewById(R.id.fieldPhone);
         fieldEmail = view.findViewById(R.id.fieldEmail);
 
-/*        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int i) {
-                dialog.dismiss();
-            }
-        });*/
         builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when the "OK" button is clicked
@@ -109,14 +106,24 @@ public class DialogRegister {
                     // call the dialog again
                     showRegisterDialog(context);
                 } else {
-                    dialog.dismiss();
                     String name = fieldName.getText().toString();
                     String phone = fieldPhone.getText().toString();
                     userPhone = phone;
                     String email = fieldEmail.getText().toString();
-                    sendUserToServerAsync(context, name, phone, email);
 
-                    //showSMSvalidationDialog(context);
+                    sendUserToServerAsync(context, name, phone, email);
+                    dialog.dismiss();
+                    showSMSvalidationDialog(context);
+//
+//                    // Check if the user is registered
+//                    if (userRegistered) {
+//                        dialog.dismiss();
+//                        // Go to next dialog
+//                        showSMSvalidationDialog(context);
+//                        //userRegistered = false;
+//                    } else {
+//                        showRegisterDialog(context);
+//                    }
                 }
             }
         });
@@ -137,12 +144,6 @@ public class DialogRegister {
         builder.setView(view);
         fieldCode = view.findViewById(R.id.validationCode);
 
-//        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int i) {
-//                dialog.dismiss();
-//            }
-//        });
         builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when the "OK" button is clicked
@@ -152,8 +153,10 @@ public class DialogRegister {
                     // call the dialog again
                     showSMSvalidationDialog(context);
                 } else {
-                    dialog.dismiss();
+                    // Send the code to the server
                     sendCodeVerificationAsync(context, fieldCode.getText().toString(), userPhone);
+                    dialog.dismiss();
+
                 }
             }
         });
@@ -193,27 +196,34 @@ public class DialogRegister {
             // Leer la respuesta del servidor
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String response = reader.readLine();
-            //Log.d("Respuesta", response);
+
+            // Read all the lines of the response
+            String dataResponse = reader.readLine();
+            String response = dataResponse;
+            while (dataResponse != null) {
+                dataResponse = reader.readLine();
+                response += dataResponse;
+            }
+            // Parse json response
+            JSONObject jsonResponse = new JSONObject(response);
+            String status = jsonResponse.getString("status");
+            Log.d("STATUS", status);
 
             // Register status control
-            if (response.equals("OK")) {
+            if (status.equals("OK")) {
                 Log.d("REGISTER", "User registered");
                 // Show a toast message to the user to aknowledge the registration
                 //Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
-                // Go to next dialog
-                showSMSvalidationDialog(context);
             } else {
                 //Toast.makeText(context, "Error al registrar al usuario", Toast.LENGTH_SHORT).show();
-                Log.e("REGISTER", "Error registering user");
-                showRegisterDialog(context);
+                Log.e("REGISTER", "Error in server response. User not registered.");
             }
 
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
             //throw new RuntimeException(e);
-            Log.d("ERROR", "Error registering user\n" + e);
+            Log.e("ERROR", "Error registering user\n" + e);
         }
     }
 
@@ -266,9 +276,10 @@ public class DialogRegister {
             Log.d("STATUS", status);
 
             if (status.equals("OK")) {
+                smsValidated = true;
                 JSONObject data = new JSONObject(jsonResponse.getString("data"));
                 String token = data.getString("api_key");
-                Log.d("REGISTRO", "User registered");
+                Log.d("REGISTER", "User registered");
                 Log.d("APIKEY", token);
                 // Show a toast message to the user to aknowledge the registration
 
@@ -278,17 +289,15 @@ public class DialogRegister {
                 OutputStreamWriter outputStreamWriterToken = new OutputStreamWriter(context.openFileOutput("token.txt", Context.MODE_PRIVATE));
                 outputStreamWriterToken.write(token);
                 outputStreamWriterToken.close();
-                //mainActivity.setTokenValidated(true);
             } else {
-                Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
-                Log.d("ERROR", "Error sending verification code");
-                showSMSvalidationDialog(context);
+                //Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
+                Log.e("REGISTER", "Error in server response. Invalid code?");
             }
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
             //throw new RuntimeException(e);
-            Log.d("ERROR", "Error registering user\n" + e);
+            Log.e("ERROR", "Error sending code verification\n" + e);
         }
     }
 

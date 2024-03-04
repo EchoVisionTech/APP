@@ -56,6 +56,7 @@ import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -163,7 +164,7 @@ public class UlladaFragment extends Fragment {
     }
 
     private void captureImage() {
-        if (tts.isSpeaking()){
+        if (!tts.isSpeaking()){
             SimpleDateFormat mDateFormat = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US);
             File imageFile = new File(requireContext().getFilesDir(), mDateFormat.format(new Date()) + ".jpg");
 
@@ -181,6 +182,8 @@ public class UlladaFragment extends Fragment {
                     error.printStackTrace();
                 }
             });
+        } else {
+            Toast.makeText(requireContext(), "Espere a que termine la descripción de la imagen actual", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -193,7 +196,7 @@ public class UlladaFragment extends Fragment {
     }
 
     private void showImagePath(final String imagePath) {
-        getActivity().runOnUiThread(new Runnable() {
+        requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (cont_toast == 0) {
@@ -214,7 +217,7 @@ public class UlladaFragment extends Fragment {
             token = reader.readLine();
         } catch (IOException e) {
             //throw new RuntimeException(e);
-            Log.d("ERROR", "Error al leer el token\n" + e);
+            Log.e("ERROR", "Error al leer el token\n" + e);
         }
 
         Log.d("TOKEN", token);
@@ -226,7 +229,6 @@ public class UlladaFragment extends Fragment {
             json.put("prompt", "Describe esta imagen en castellano");
             json.put("token", token);
             json.put("image", imageData);
-
 
             // send JSON
             URL url = new URL(serverUrl);
@@ -245,16 +247,37 @@ public class UlladaFragment extends Fragment {
             InputStream inputStream = connection.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-            String response = reader.readLine();
-            //tts.speak(response, TextToSpeech.QUEUE_FLUSH, null);
-            tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, "1");
-            Log.d("Respuesta", response);
+            // Read all the lines of the response
+            String dataResponse = reader.readLine();
+            String response = dataResponse;
+            while (dataResponse != null) {
+                Log.d("RESPONSE", dataResponse);
+                dataResponse = reader.readLine();
+                response += dataResponse;
+            }
+            // Parse json response
+            JSONObject jsonResponse = new JSONObject(response);
+            String status = jsonResponse.getString("status");
+            Log.d("STATUS", status);
+
+            if (status.equals("OK")) {
+                JSONObject data = new JSONObject(jsonResponse.getString("data"));
+                String imageDescription = data.getString("response");
+                Log.d("Descripcion imagen", imageDescription);
+                tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, "1");
+            } else {
+                Log.e("ERROR", "Error en la respuesta del servidor." + jsonResponse.getString("message"));
+                if (jsonResponse.getString("message").equals("Quota superada")) {
+                    tts.speak("Ha superado el límite de imágenes que puede enviar al servidor. Por favor, espere a que se reinicie el contador.", TextToSpeech.QUEUE_FLUSH, null, "1");
+                    Toast.makeText(requireContext(), "Has superado la cuota de imagenes diarias", Toast.LENGTH_LONG).show();
+                }
+            }
 
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
             //throw new RuntimeException(e);
-            Log.d("ERROR", "Error al enviar la imagen al servidor\n" + e);
+            Log.e("ERROR", "Error al enviar la imagen al servidor\n" + e);
         }
     }
 
@@ -265,7 +288,7 @@ public class UlladaFragment extends Fragment {
             inputStream = new FileInputStream(imageFile);
         } catch (FileNotFoundException e) {
             //throw new RuntimeException(e);
-            Log.d("ERROR", "Error al convertir la imagen a base64\n" + e);
+            Log.e("ERROR", "Error al convertir la imagen a base64\n" + e);
         }
         byte[] buffer = new byte[1024];
         int bytesRead = 0;
@@ -274,7 +297,7 @@ public class UlladaFragment extends Fragment {
                 if ((bytesRead = inputStream.read(buffer)) == -1) break;
             } catch (IOException e) {
                 //throw new RuntimeException(e);
-                Log.d("ERROR", "Error al convertir la imagen a base64\n" + e);
+                Log.e("ERROR", "Error al convertir la imagen a base64\n" + e);
             }
             outputStream.write(buffer, 0, bytesRead);
         }
