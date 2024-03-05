@@ -267,7 +267,7 @@ public class UlladaFragment extends Fragment {
                 tts.speak(response, TextToSpeech.QUEUE_FLUSH, null, "1");
             } else {
                 Log.e("ERROR", "Error en la respuesta del servidor." + jsonResponse.getString("message"));
-                if (jsonResponse.getString("message").equals("Quota superada")) {
+                if (connection.getResponseCode() == 429) {
                     tts.speak("Ha superado el límite de imágenes que puede enviar al servidor. Por favor, espere a que se reinicie el contador.", TextToSpeech.QUEUE_FLUSH, null, "1");
                     Toast.makeText(requireContext(), "Has superado la cuota de imagenes diarias", Toast.LENGTH_LONG).show();
                 }
