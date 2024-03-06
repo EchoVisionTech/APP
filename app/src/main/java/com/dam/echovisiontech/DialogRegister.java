@@ -1,8 +1,11 @@
 package com.dam.echovisiontech;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,17 +30,11 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 public class DialogRegister {
-//    private static MainActivity mainActivity;
-//
-//    public DialogRegister(MainActivity mainActivity) {
-//        this.mainActivity = mainActivity;
-//    }
     static EditText fieldName;
     static EditText fieldPhone;
     static EditText fieldEmail;
     static EditText fieldCode;
     static String userPhone;
-    static boolean userRegistered = false;
     static boolean smsValidated = false;
 
 
@@ -100,7 +97,7 @@ public class DialogRegister {
         builder.setPositiveButton("Register", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when the "OK" button is clicked
-                if (!getUserFields(context)) {
+                if (!getUserFields()) {
                     // Show a message to the user indicating that fields are empty
                     Toast.makeText(context, "Complete all the fields", Toast.LENGTH_SHORT).show();
                     // call the dialog again
@@ -167,7 +164,7 @@ public class DialogRegister {
     }
 
     // Method to connect and send user data to the server
-    private static void sendUserToServer(Context context, String name, String phoneNumber, String email) {
+    private static void sendUserToServer( String name, String phoneNumber, String email) {
 
         String serverUrl = "https://ams22.ieti.site:443/api/user/register";
 
@@ -223,6 +220,7 @@ public class DialogRegister {
 
         } catch (IOException | JSONException e) {
             //throw new RuntimeException(e);
+            e.printStackTrace();
             Log.e("ERROR", "Error registering user\n" + e);
         }
     }
@@ -232,7 +230,7 @@ public class DialogRegister {
         // Usa un Executor para ejecutar la tarea en otro hilo
         Executor sendExecutor = Executors.newSingleThreadExecutor();
         sendExecutor.execute(() -> {
-            sendUserToServer(context, name, phoneNumber, email);
+            sendUserToServer(name, phoneNumber, email);
         });
     }
 
@@ -281,8 +279,8 @@ public class DialogRegister {
                 String token = data.getString("api_key");
                 Log.d("REGISTER", "User registered");
                 Log.d("APIKEY", token);
-                // Show a toast message to the user to aknowledge the registration
 
+                // Show a toast message to the user to aknowledge the registration
                 //Toast.makeText(context, "User registered", Toast.LENGTH_SHORT).show();
 
                 // Write token in private app folder
@@ -292,12 +290,35 @@ public class DialogRegister {
             } else {
                 //Toast.makeText(context, "Error registering user", Toast.LENGTH_SHORT).show();
                 Log.e("REGISTER", "Error in server response. Invalid code?");
+                // If context is an Activity, use runOnUiThread
+                if (context instanceof Activity) {
+                    ((Activity) context).runOnUiThread(() -> {
+                        showSMSvalidationDialog(context);
+                    });
+                } else {
+                    // Otherwise, use a Handler
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        showSMSvalidationDialog(context);
+                    });
+                }
             }
             connection.disconnect();
 
         } catch (IOException | JSONException e) {
             //throw new RuntimeException(e);
-            Log.e("ERROR", "Error sending code verification\n" + e);
+            // If context is an Activity, use runOnUiThread
+            Log.e("ERROR", "Error validating code\n" + e);
+            e.printStackTrace();
+            if (context instanceof Activity) {
+                ((Activity) context).runOnUiThread(() -> {
+                    showSMSvalidationDialog(context);
+                });
+            } else {
+                // Otherwise, use a Handler
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    showSMSvalidationDialog(context);
+                });
+            }
         }
     }
 
@@ -311,7 +332,7 @@ public class DialogRegister {
     }
 
     // Get the user fields and check if they are empty. Logs for debugging
-    private static boolean getUserFields(Context context) {
+    private static boolean getUserFields() {
         if (fieldName.getText().toString().isEmpty() || fieldPhone.getText().toString().isEmpty() || fieldEmail.getText().toString().isEmpty()) {
             Log.d("fieldsFalse",fieldName.getText().toString());
             Log.d("fieldsFalse",fieldPhone.getText().toString());
