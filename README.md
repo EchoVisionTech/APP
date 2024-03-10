@@ -8,8 +8,10 @@
 
 Video - [Link](https://drive.google.com/file/d/1_FC1-XEnxTBVbmq-9pQHAkun2WVyHJYk/view?usp=sharing)
 
-Autor: - [J. Martin](https://github.com/jmartintoro)
+## Authors
 
-Autor: - [G. Biagi](https://www.github.com/gbiagi)
+- J. Martin - [@jmartintoro](https://github.com/jmartintoro)
 
-Autor: - [J. Lostao](https://github.com/jlostao)
+- G. Biagi - [@gbiagi](https://www.github.com/gbiagi)
+
+- J. Lostao - [@jlostao](https://github.com/jlostao)
